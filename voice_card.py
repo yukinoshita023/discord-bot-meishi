@@ -1,6 +1,7 @@
 import discord
 from PIL import Image, ImageDraw, ImageFont
 import io
+import requests  # 追加
 
 # ボイスチャンネルIDとテキストチャンネルIDを設定
 VOICE_CHANNEL_ID = 860122545381572608  # ここに対象のボイスチャンネルIDを入れる
@@ -9,9 +10,9 @@ TEXT_CHANNEL_ID = 1350699397654122517  # ここに投稿するテキストチャ
 # ユーザーのメッセージIDを記録するキャッシュ
 message_cache = {}
 
-def create_voice_card(username: str) -> io.BytesIO:
+def create_voice_card(member: discord.Member) -> io.BytesIO:
     """
-    ユーザー名が入った横長のメイシ画像を生成する
+    ユーザー名とアイコンが入った横長のメイシ画像を生成する
     """
     try:
         # 背景画像を開く
@@ -22,14 +23,19 @@ def create_voice_card(username: str) -> io.BytesIO:
     draw = ImageDraw.Draw(image)
     width, height = image.size
     
-    # フォントの設定（適切なフォントパスを指定）
+    # フォントの設定（日本語対応フォントを指定）
     try:
-        font = ImageFont.truetype("arial.ttf", 30)  # Windows用
+        font = ImageFont.truetype("msgothic.ttc", 30)  # MSゴシック（Windows用）
     except IOError:
         try:
             font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 30)  # Linux用
         except IOError:
             font = ImageFont.load_default()
+
+    # ユーザー名を取得
+    username = member.display_name
+
+    print(username)
 
     # `textbbox()` を使ってテキストサイズを取得
     bbox = draw.textbbox((0, 0), username, font=font)
@@ -40,6 +46,12 @@ def create_voice_card(username: str) -> io.BytesIO:
     text_x = (width - text_width) // 2
     text_y = (height - text_height) // 2
     draw.text((text_x, text_y), username, fill=(0, 0, 0), font=font)
+
+    # ユーザーアイコンを取得して画像に追加
+    avatar_url = member.avatar.url
+    avatar = Image.open(io.BytesIO(requests.get(avatar_url).content))
+    avatar = avatar.resize((50, 50))  # アイコンのサイズ調整
+    image.paste(avatar, (10, 10))  # アイコンを画像の左上に配置
 
     # 画像をバイトデータに変換
     img_bytes = io.BytesIO()
@@ -59,7 +71,7 @@ async def handle_voice_state_update(member: discord.Member, before: discord.Voic
         # VCに参加した場合（新しく入った時のみ）
         if after.channel and after.channel.id == VOICE_CHANNEL_ID:
             if text_channel:
-                image = create_voice_card(member.name)
+                image = create_voice_card(member)
                 file = discord.File(image, filename="voice_card.png")
                 message = await text_channel.send(file=file, content=f"{member.mention} がVCに参加しました！")
                 
