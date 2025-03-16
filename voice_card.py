@@ -13,25 +13,35 @@ def create_voice_card(username: str) -> io.BytesIO:
     """
     ユーザー名が入った横長のメイシ画像を生成する
     """
-    width, height = 400, 100
-    image = Image.new("RGB", (width, height), (255, 255, 255))
+    try:
+        # 背景画像を開く
+        image = Image.open("メイシテスト.png").convert("RGB")
+    except IOError:
+        raise FileNotFoundError("メイシテスト.png が見つかりません！")
+
     draw = ImageDraw.Draw(image)
+    width, height = image.size
     
     # フォントの設定（適切なフォントパスを指定）
     try:
-        font = ImageFont.truetype("arial.ttf", 30)
+        font = ImageFont.truetype("arial.ttf", 30)  # Windows用
     except IOError:
-        font = ImageFont.load_default()
-    
+        try:
+            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 30)  # Linux用
+        except IOError:
+            font = ImageFont.load_default()
+
     # `textbbox()` を使ってテキストサイズを取得
     bbox = draw.textbbox((0, 0), username, font=font)
     text_width = bbox[2] - bbox[0]
     text_height = bbox[3] - bbox[1]
     
+    # テキストの位置を中央に調整
     text_x = (width - text_width) // 2
     text_y = (height - text_height) // 2
     draw.text((text_x, text_y), username, fill=(0, 0, 0), font=font)
-    
+
+    # 画像をバイトデータに変換
     img_bytes = io.BytesIO()
     image.save(img_bytes, format="PNG")
     img_bytes.seek(0)
