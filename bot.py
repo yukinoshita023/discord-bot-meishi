@@ -2,6 +2,7 @@ import discord
 from config import TOKEN
 from commands import setup_commands
 from voice_card import handle_voice_state_update
+from role_manager import assign_role_to_member, remove_role_from_member
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -28,5 +29,12 @@ async def on_ready():
 @bot.event
 async def on_voice_state_update(member, before, after):
     await handle_voice_state_update(member, before, after)
+
+    # ボイスチャンネルに参加した場合、ロールを付与
+    if before.channel != after.channel:
+        if after.channel:  # 参加した場合
+            await assign_role_to_member(member, after.channel.id)
+        elif before.channel:  # 退出した場合
+            await remove_role_from_member(member, before.channel.id)
 
 bot.run(TOKEN)
