@@ -3,7 +3,7 @@ from config import TOKEN
 from commands import setup_commands
 from voice_card import handle_voice_state_update
 from role_manager import assign_role_to_member, remove_role_from_member
-from db import init_db
+from answers_db import init_answers_db
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -14,7 +14,7 @@ class MyBot(discord.Client):
         super().__init__(intents=intents)
         self.tree = discord.app_commands.CommandTree(self)
 
-        init_db() # データベースの初期化
+        init_answers_db()
 
     async def setup_hook(self):
         await setup_commands(self)
