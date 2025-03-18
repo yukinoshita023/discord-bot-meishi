@@ -56,7 +56,7 @@ def create_voice_card(member: discord.Member) -> io.BytesIO:
     username = member.display_name
 
     # ユーザー名描画（白色）
-    draw.text((20, 20), f"ユーザー名: {username}", fill=(255, 255, 255), font=font)
+    draw.text((20, 20),username, fill=(255, 255, 255), font=font)
 
     # ユーザーの回答データを取得
     answers = fetch_answers(member.id)
