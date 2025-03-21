@@ -14,16 +14,27 @@ message_cache = {}
 
 def fetch_answers(user_id: int):
     """
-    Firestoreから指定したユーザーIDの質問と回答を取得する
+    Firestoreから指定したユーザーIDの質問と回答を取得する。
+    回答のある質問のみ、指定された順序で返す。
     """
+    QUESTIONS_ORDER = [
+        "好きな食べ物は？",
+        "好きなコンテンツは？",
+        "好きなアーティストは？",
+        "最近ハマってる趣味は？",
+        "私はこんな人"
+    ]
+
     doc_ref = db.collection("users").document(str(user_id))
     doc = doc_ref.get()
 
-    if doc.exists:
-        data = doc.to_dict()
-        return list(data.items())  # [(質問, 回答), ...] の形式に揃える
-    else:
+    if not doc.exists:
         return []
+
+    data = doc.to_dict()
+    # 順番通りかつ回答があるものだけを抽出
+    ordered_answers = [(q, data[q]) for q in QUESTIONS_ORDER if q in data and data[q]]
+    return ordered_answers
 
 def create_voice_card(member: discord.Member) -> io.BytesIO:
     """
