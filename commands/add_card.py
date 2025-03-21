@@ -1,8 +1,7 @@
 import discord
 from discord import app_commands
-from firebase_config import db  # Firestoreを使うために必要
+from firebase_config import db
 
-# 質問のリスト
 QUESTIONS = [
     "好きな食べ物は？",
     "好きなコンテンツは？",
@@ -11,14 +10,12 @@ QUESTIONS = [
     "私はこんな人"
 ]
 
-# Firestore に回答を保存する関数
 def save_answer(user_id: int, question: str, answer: str):
     user_doc = db.collection("users").document(str(user_id))
     user_doc.set({
         question: answer
     }, merge=True)
 
-# コマンドのセットアップ
 async def setup(bot: discord.Client):
     @bot.tree.command(name="add_card", description="質問に対する答えを保存します")
     @app_commands.describe(question="答える質問を選んでください", answer="答えを入力してください")

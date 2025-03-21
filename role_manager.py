@@ -1,5 +1,3 @@
-# role_manager.py
-
 import discord
 
 # ボイスチャンネルIDとロールIDのマッピング（ボイスチャンネルID -> ロールID）
