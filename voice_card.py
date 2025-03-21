@@ -5,9 +5,17 @@ import requests
 from firebase_config import db
 from PIL import ImageEnhance
 
-# ボイスチャンネルIDとテキストチャンネルIDを設定
-VOICE_CHANNEL_ID = 847158182257754116  # ここに対象のボイスチャンネルIDを入れる
-TEXT_CHANNEL_ID = 1350765245773250601  # ここに投稿するテキストチャンネルのIDを入れる
+CHANNEL_PAIRS = {
+    847514073964740679: 1350763932427489330,  # モクモク1
+    905313176277626880: 1350764187697283093,  # モクモク2
+    905313335715713084: 1350764458447863818,  # モクモク3
+    860122545381572608: 1350699397654122517,  # ノンビリ1
+    905329359244656710: 1350764944890789888,  # ノンビリ2
+    905329383630340117: 1350765102957068318,  # ノンビリ3
+    847158182257754116: 1350765245773250601,  # ワイワイ1
+    905332813853765642: 1350765348994940958,  # ワイワイ2
+    905332899421769728: 1350765457451515965,  # ワイワイ3
+}
 
 # ユーザーのメッセージIDを記録するキャッシュ
 message_cache = {}
@@ -137,30 +145,33 @@ def create_voice_card(member: discord.Member) -> io.BytesIO:
 
 async def handle_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
     """
-    指定のボイスチャンネルにメンバーが入ったときにメイシを送信し、
-    退出したら削除する
+    ボイスチャンネル参加時に対応するテキストチャンネルへメイシ画像を送信し、
+    退出時にメッセージを削除する（複数ペア対応）
     """
-    text_channel = member.guild.get_channel(TEXT_CHANNEL_ID)
-
-    # ボイスチャンネルに新しく入った場合
+    # ボイスチャンネルの移動があった場合のみ処理
     if before.channel != after.channel:
         # VCに参加した場合
-        if after.channel and after.channel.id == VOICE_CHANNEL_ID:
+        if after.channel and after.channel.id in CHANNEL_PAIRS:
+            text_channel_id = CHANNEL_PAIRS[after.channel.id]
+            text_channel = member.guild.get_channel(text_channel_id)
+
             if text_channel:
                 image = create_voice_card(member)
                 file = discord.File(image, filename="voice_card.png")
                 message = await text_channel.send(file=file, content=f"{member.mention} がVCに参加しました！")
 
                 # メッセージIDを記録
-                message_cache[member.id] = message.id
+                message_cache[member.id] = (text_channel.id, message.id)
 
-        # VCから退出した場合
-        elif before.channel and before.channel.id == VOICE_CHANNEL_ID and after.channel is None:
-            if text_channel:
-                message_id = message_cache.pop(member.id, None)
-                if message_id:
+        # VCから退出した場合（beforeのIDが登録されている場合のみ）
+        elif before.channel and before.channel.id in CHANNEL_PAIRS and after.channel is None:
+            if member.id in message_cache:
+                cached_channel_id, message_id = message_cache.pop(member.id, (None, None))
+                text_channel = member.guild.get_channel(cached_channel_id)
+
+                if text_channel and message_id:
                     try:
                         message = await text_channel.fetch_message(message_id)
                         await message.delete()
                     except discord.NotFound:
-                        pass  # 既に削除されていた場合は無視
+                        pass  # すでに削除されていた場合
