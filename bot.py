@@ -1,6 +1,10 @@
 import discord
 from config import TOKEN
 from commands import setup_commands
+from voice_card import handle_voice_state_update
+from role_manager import assign_role_to_member, remove_role_from_member
+
+from firebase_config import db
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -23,5 +27,15 @@ bot = MyBot()
 @bot.event
 async def on_ready():
     print(f"ログインしました: {bot.user}")
+
+@bot.event
+async def on_voice_state_update(member, before, after):
+    await handle_voice_state_update(member, before, after)
+
+    if before.channel != after.channel:
+        if after.channel:
+            await assign_role_to_member(member, after.channel.id)
+        elif before.channel:
+            await remove_role_from_member(member, before.channel.id)
 
 bot.run(TOKEN)
