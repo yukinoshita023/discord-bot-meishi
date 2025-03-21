@@ -145,33 +145,35 @@ def create_voice_card(member: discord.Member) -> io.BytesIO:
 
 async def handle_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
     """
-    ボイスチャンネル参加時に対応するテキストチャンネルへメイシ画像を送信し、
-    退出時にメッセージを削除する（複数ペア対応）
+    ボイスチャンネルに入った時、対応するテキストチャンネルへメイシ画像を送信し、
+    出た時や移動時に以前のメイシを削除する
     """
-    # ボイスチャンネルの移動があった場合のみ処理
-    if before.channel != after.channel:
-        # VCに参加した場合
-        if after.channel and after.channel.id in CHANNEL_PAIRS:
-            text_channel_id = CHANNEL_PAIRS[after.channel.id]
-            text_channel = member.guild.get_channel(text_channel_id)
 
-            if text_channel:
+    # === 1. 退出・移動時の削除処理（beforeが登録チャンネルの場合）
+    if before.channel and before.channel.id in CHANNEL_PAIRS:
+        if member.id in message_cache:
+            cached_channel_id, message_id = message_cache.pop(member.id, (None, None))
+            text_channel = member.guild.get_channel(cached_channel_id)
+
+            if text_channel and message_id:
+                try:
+                    message = await text_channel.fetch_message(message_id)
+                    await message.delete()
+                except discord.NotFound:
+                    pass  # すでに削除されていた場合は無視
+
+    # === 2. 参加・移動時のメイシ送信処理（afterが登録チャンネルの場合）
+    if after.channel and after.channel.id in CHANNEL_PAIRS:
+        text_channel_id = CHANNEL_PAIRS[after.channel.id]
+        text_channel = member.guild.get_channel(text_channel_id)
+
+        if text_channel:
+            try:
                 image = create_voice_card(member)
                 file = discord.File(image, filename="voice_card.png")
                 message = await text_channel.send(file=file, content=f"{member.mention} がVCに参加しました！")
 
-                # メッセージIDを記録
+                # 新しいメッセージを記録
                 message_cache[member.id] = (text_channel.id, message.id)
-
-        # VCから退出した場合（beforeのIDが登録されている場合のみ）
-        elif before.channel and before.channel.id in CHANNEL_PAIRS and after.channel is None:
-            if member.id in message_cache:
-                cached_channel_id, message_id = message_cache.pop(member.id, (None, None))
-                text_channel = member.guild.get_channel(cached_channel_id)
-
-                if text_channel and message_id:
-                    try:
-                        message = await text_channel.fetch_message(message_id)
-                        await message.delete()
-                    except discord.NotFound:
-                        pass  # すでに削除されていた場合
+            except Exception as e:
+                print(f"メイシ生成・送信エラー: {e}")
