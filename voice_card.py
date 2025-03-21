@@ -36,6 +36,21 @@ def fetch_answers(user_id: int):
     ordered_answers = [(q, data[q]) for q in QUESTIONS_ORDER if q in data and data[q]]
     return ordered_answers
 
+def truncate_text(text: str, limit: int) -> str:
+    """
+    全角＝2文字、半角＝1文字でカウントして制限する。
+    超えた分はカット。
+    """
+    result = ''
+    count = 0
+    for char in text:
+        # 全角なら +2、それ以外は +1
+        count += 2 if ord(char) > 255 else 1
+        if count > limit:
+            break
+        result += char
+    return result
+
 def create_voice_card(member: discord.Member) -> io.BytesIO:
     """
     ユーザー名とアイコン、質問と回答を入れた名刺画像を生成する
@@ -65,7 +80,7 @@ def create_voice_card(member: discord.Member) -> io.BytesIO:
             font_large = font_normal = ImageFont.load_default()  # どれもなければデフォルトフォント
 
     # ユーザー名取得
-    username = member.display_name
+    username = truncate_text(member.display_name, 28)
 
     # ユーザーアイコン取得
     avatar_url = member.avatar.url
@@ -92,9 +107,10 @@ def create_voice_card(member: discord.Member) -> io.BytesIO:
     answer_x = 350  # 答えを質問の横に配置
 
     for question, answer in answers:
+        answer = truncate_text(answer, 44)  # 全角22文字 = 44カウント
         draw.text((question_x, y_offset), question, fill=(255, 255, 255), font=font_normal)
         draw.text((answer_x, y_offset), answer, fill=(255, 255, 255), font=font_normal)
-        y_offset += 50  # 次の行へ
+        y_offset += 50
 
     # **下側に正方形を5つ描画**
     square_size = 120  # 正方形のサイズ
