@@ -2,29 +2,28 @@ import discord
 from PIL import Image, ImageDraw, ImageFont
 import io
 import requests
-import sqlite3
+from firebase_config import db
 from PIL import ImageEnhance
 
 # ボイスチャンネルIDとテキストチャンネルIDを設定
-VOICE_CHANNEL_ID = 905313176277626880  # ここに対象のボイスチャンネルIDを入れる
-TEXT_CHANNEL_ID = 1350764187697283093  # ここに投稿するテキストチャンネルのIDを入れる
+VOICE_CHANNEL_ID = 847158182257754116  # ここに対象のボイスチャンネルIDを入れる
+TEXT_CHANNEL_ID = 1350765245773250601  # ここに投稿するテキストチャンネルのIDを入れる
 
 # ユーザーのメッセージIDを記録するキャッシュ
 message_cache = {}
 
 def fetch_answers(user_id: int):
     """
-    指定したユーザーIDの質問と回答をanswers.dbから取得する
+    Firestoreから指定したユーザーIDの質問と回答を取得する
     """
-    conn = sqlite3.connect("answers.db")
-    cursor = conn.cursor()
+    doc_ref = db.collection("users").document(str(user_id))
+    doc = doc_ref.get()
 
-    # データ取得
-    cursor.execute("SELECT question, answer FROM answers WHERE user_id = ?", (user_id,))
-    data = cursor.fetchall()
-
-    conn.close()
-    return data  # [(質問1, 答え1), (質問2, 答え2), ...]
+    if doc.exists:
+        data = doc.to_dict()
+        return list(data.items())  # [(質問, 回答), ...] の形式に揃える
+    else:
+        return []
 
 def create_voice_card(member: discord.Member) -> io.BytesIO:
     """

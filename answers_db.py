@@ -1,39 +1,19 @@
-import sqlite3
-import os
+from firebase_config import db
 
-# データベースの初期化
-def init_answers_db():
+# 質問と回答をFirestoreに保存
+from firebase_config import db
 
-    conn = sqlite3.connect('answers.db')
-    c = conn.cursor()
-    # テーブルが存在しない場合は作成
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS answers (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            question TEXT NOT NULL,
-            answer TEXT NOT NULL
-        )
-    ''')
-    conn.commit()
-    conn.close()
-
-# 質問と回答をデータベースに保存
-def save_answer(user_id, question, answer):
-    conn = sqlite3.connect('answers.db')
-    c = conn.cursor()
-    c.execute('''
-        INSERT INTO answers (user_id, question, answer)
-        VALUES (?, ?, ?)
-    ''', (user_id, question, answer))
-    conn.commit()
-    conn.close()
+def save_answer(user_id: int, question: str, answer: str):
+    user_doc = db.collection("users").document(str(user_id))
+    user_doc.set({
+        question: answer
+    }, merge=True)
 
 # ユーザーの回答履歴を取得
-def get_user_answers(user_id):
-    conn = sqlite3.connect('answers.db')
-    c = conn.cursor()
-    c.execute('SELECT question, answer FROM answers WHERE user_id = ?', (user_id,))
-    answers = c.fetchall()
-    conn.close()
-    return answers
+def get_user_answers(user_id: int):
+    user_doc = db.collection("users").document(str(user_id)).get()
+    if user_doc.exists:
+        data = user_doc.to_dict()
+        return list(data.items())  # [(question, answer), ...]
+    else:
+        return []
