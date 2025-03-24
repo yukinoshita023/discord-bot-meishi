@@ -130,8 +130,7 @@ def create_voice_card(member: discord.Member) -> io.BytesIO:
 
 
 async def handle_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-
-    if before.channel and before.channel.id in CHANNEL_PAIRS:
+    if before.channel and before.channel.id in CHANNEL_PAIRS and before.channel != after.channel:
         if member.id in message_cache:
             cached_channel_id, message_id = message_cache.pop(member.id, (None, None))
             text_channel = member.guild.get_channel(cached_channel_id)
@@ -143,7 +142,7 @@ async def handle_voice_state_update(member: discord.Member, before: discord.Voic
                 except discord.NotFound:
                     pass
 
-    if after.channel and after.channel.id in CHANNEL_PAIRS:
+    if after.channel and after.channel.id in CHANNEL_PAIRS and before.channel != after.channel:
         text_channel_id = CHANNEL_PAIRS[after.channel.id]
         text_channel = member.guild.get_channel(text_channel_id)
 
