@@ -154,10 +154,22 @@ async def handle_voice_state_update(member: discord.Member, before: discord.Voic
 
         if text_channel:
             try:
+                answers = fetch_answers(member.id)
+
+                if not answers:
+                    message = await text_channel.send(
+                        content=f"{member.mention} さん、まだ自己紹介が未設定のようです！ `/add_card` コマンドで登録してみてね！"
+                    )
+                    message_cache[member.id] = (text_channel.id, message.id)
+                    return
+
                 image = create_voice_card(member)
                 file = discord.File(image, filename="voice_card.png")
-                message = await text_channel.send(file=file, content=f"{member.mention} がVCに参加しました！")
-
+                message = await text_channel.send(
+                    file=file,
+                    content="VCに参加しました！"
+                )
                 message_cache[member.id] = (text_channel.id, message.id)
+
             except Exception as e:
                 print(f"メイシ生成・送信エラー: {e}")
