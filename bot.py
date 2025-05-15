@@ -33,9 +33,9 @@ async def on_voice_state_update(member, before, after):
     await handle_voice_state_update(member, before, after)
 
     if before.channel != after.channel:
+        if before.channel:
+            await remove_role_from_member(member, before.channel.id)
         if after.channel:
             await assign_role_to_member(member, after.channel.id)
-        elif before.channel:
-            await remove_role_from_member(member, before.channel.id)
 
 bot.run(TOKEN)
