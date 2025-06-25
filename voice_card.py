@@ -113,13 +113,32 @@ def create_voice_card(member: discord.Member) -> io.BytesIO:
     spacing = (width - padding * 2 - square_size * 5) // 4  # 正方形間の間隔
     square_y = height - square_size - 30
 
+    points = fetch_points(member.id)
+    
+    badge_categories = [
+    ("mokumoku", "モクモク"),
+    ("nonbiri", "ノンビリ"),
+    ("waiwai", "ワイワイ"),
+    ]
+
     for i in range(5):
         square_x = padding + (square_size + spacing) * i
-        draw.rectangle(
-            [(square_x, square_y), (square_x + square_size, square_y + square_size)],
-            outline=(255, 255, 255),
-            width=3  # 枠線の太さ
-        )
+        rect_coords = [(square_x, square_y), (square_x + square_size, square_y + square_size)]
+        draw.rectangle(rect_coords, outline=(255, 255, 255), width=3)
+
+        if i < 3:
+            category_eng, firestore_key = badge_categories[i]
+            point = points.get(firestore_key, 0)
+
+            level = get_badge_level(point)
+            badge_path = f"badges/{category_eng}/{category_eng}-{level}.png"
+
+            try:
+                badge = Image.open(badge_path).convert("RGBA")
+                badge = badge.resize((square_size, square_size))
+                image.paste(badge, (square_x, square_y), badge)
+            except IOError:
+                print(f"バッジ画像の読み込み失敗: {badge_path}")
 
     img_bytes = io.BytesIO()
     image.save(img_bytes, format="PNG")
@@ -173,3 +192,24 @@ async def handle_voice_state_update(member: discord.Member, before: discord.Voic
 
             except Exception as e:
                 print(f"メイシ生成・送信エラー: {e}")
+
+def get_badge_level(point: int) -> str:
+    if point < 20:
+        return "iron"
+    elif point < 50:
+        return "copper"
+    elif point < 100:
+        return "silver"
+    elif point < 200:
+        return "gold"
+    else:
+        return "rainbow"
+
+def fetch_points(user_id: int) -> dict:
+    doc_ref = db.collection("users").document(str(user_id))
+    doc = doc_ref.get()
+    if not doc.exists:
+        return {}
+
+    data = doc.to_dict()
+    return data.get("points", {})
