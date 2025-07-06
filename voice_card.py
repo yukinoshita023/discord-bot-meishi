@@ -176,8 +176,10 @@ async def handle_voice_state_update(member: discord.Member, before: discord.Voic
                 answers = fetch_answers(member.id)
 
                 if not answers:
+                    howto_channel_id = 1387334572613697587
+                    howto_url = f"https://discord.com/channels/{member.guild.id}/{howto_channel_id}"
                     message = await text_channel.send(
-                        content=f"{member.mention} さん、まだ自己紹介が未設定のようです！ `/add_card` コマンドで登録してみてね！"
+                        content=f"{member.mention} さん、まだ自己紹介が未設定のようです！ `/add_card` コマンドで登録してみてね！登録方法はこちら 👉 {howto_url}"
                     )
                     message_cache[member.id] = (text_channel.id, message.id)
                     return
