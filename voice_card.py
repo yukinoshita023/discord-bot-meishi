@@ -196,16 +196,22 @@ async def handle_voice_state_update(member: discord.Member, before: discord.Voic
                 print(f"メイシ生成・送信エラー: {e}")
 
 def get_badge_level(point: int) -> str:
-    if point < 20:
+    if point < 6:
         return "iron"
-    elif point < 50:
+    elif point < 36:
         return "copper"
-    elif point < 100:
+    elif point < 96:
         return "silver"
-    elif point < 200:
+    elif point < 240:
         return "gold"
     else:
         return "rainbow"
+    
+    # ノーマル：~30分
+    # カッパー：30分~3時間
+    # シルバー：3時間~8時間
+    # ゴールド：8時間~20時間
+    # レインボー：20時間~
 
 def fetch_points(user_id: int) -> dict:
     doc_ref = db.collection("users").document(str(user_id))
