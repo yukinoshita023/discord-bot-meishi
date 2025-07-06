@@ -211,6 +211,7 @@ def get_badge_level(point: int) -> str:
     # カッパー：30分~3時間
     # シルバー：3時間~8時間
     # ゴールド：8時間~20時間
+    # レインボー：20時間~
 
 def fetch_points(user_id: int) -> dict:
     doc_ref = db.collection("users").document(str(user_id))
