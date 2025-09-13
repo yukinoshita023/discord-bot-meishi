@@ -1,8 +1,8 @@
 import discord
 from config import TOKEN
 from commands import setup_commands
-from voice_card import handle_voice_state_update
-from role_manager import assign_role_to_member, remove_role_from_member
+from features.voice_card import handle_voice_state_update
+from features.role_manager import assign_role_to_member, remove_role_from_member
 
 from firebase_config import db
 
