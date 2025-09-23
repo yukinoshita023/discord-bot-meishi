@@ -45,7 +45,7 @@ def fetch_answers(user_id: int):
 
 def truncate_text(text: str, limit: int) -> str:
     """
-    全角＝2文字、半角＝1文字でカウントして制限する。
+    全角=2文字、半角=1文字でカウントして制限する。
     超えた分はカット。
     """
     result = ''
@@ -108,17 +108,20 @@ def create_voice_card(member: discord.Member) -> io.BytesIO:
         draw.text((answer_x, y_offset), answer, fill=(255, 255, 255), font=font_normal)
         y_offset += 50
 
-    square_size = 120  # 正方形のサイズ
-    padding = 30  # 左右の余白
-    spacing = (width - padding * 2 - square_size * 5) // 4  # 正方形間の間隔
+    square_size = 120
+    padding = 30
+    spacing = (width - padding * 2 - square_size * 5) // 4
     square_y = height - square_size - 30
 
     points = fetch_points(member.id)
-    
-    badge_categories = [
-    ("mokumoku", "モクモク"),
-    ("nonbiri", "ノンビリ"),
-    ("waiwai", "ワイワイ"),
+
+    # スロット定義： (英語キー, Firestoreキー, 種別)
+    BADGE_SLOTS = [
+        ("mokumoku", "モクモク", "time"),
+        ("nonbiri",  "ノンビリ", "time"),
+        ("waiwai",   "ワイワイ", "time"),
+        ("reaction", "リアクション", "reaction"),
+        ("event",    "イベント",   "event"),
     ]
 
     for i in range(5):
@@ -126,19 +129,26 @@ def create_voice_card(member: discord.Member) -> io.BytesIO:
         rect_coords = [(square_x, square_y), (square_x + square_size, square_y + square_size)]
         draw.rectangle(rect_coords, outline=(255, 255, 255), width=3)
 
-        if i < 3:
-            category_eng, firestore_key = badge_categories[i]
-            point = points.get(firestore_key, 0)
+        slot_eng, firestore_key, slot_type = BADGE_SLOTS[i]
+        value = int(points.get(firestore_key, 0))
 
-            level = get_badge_level(point)
-            badge_path = f"badges/{category_eng}/{category_eng}-{level}.png"
+        # 種別ごとに判定を分ける
+        if slot_type == "time":
+            level = get_badge_level(value)              # 接続時間ポイント
+        elif slot_type == "reaction":
+            level = get_reaction_badge_level(value)     # リアクションポイント
+        elif slot_type == "event":
+            level = get_event_badge_level(value)        # イベントポイント
+        else:
+            level = "iron"
 
-            try:
-                badge = Image.open(badge_path).convert("RGBA")
-                badge = badge.resize((square_size, square_size))
-                image.paste(badge, (square_x, square_y), badge)
-            except IOError:
-                print(f"バッジ画像の読み込み失敗: {badge_path}")
+        badge_path = f"badges/{slot_eng}/{slot_eng}-{level}.png"
+        try:
+            badge = Image.open(badge_path).convert("RGBA")
+            badge = badge.resize((square_size, square_size))
+            image.paste(badge, (square_x, square_y), badge)
+        except IOError:
+            print(f"バッジ画像の読み込み失敗: {badge_path}")
 
     img_bytes = io.BytesIO()
     image.save(img_bytes, format="PNG")
@@ -212,6 +222,30 @@ def get_badge_level(point: int) -> str:
     # シルバー：3時間~8時間
     # ゴールド：8時間~20時間
     # レインボー：20時間~
+
+def get_reaction_badge_level(value: int) -> str:
+    if value <= 10:
+        return "iron"
+    elif value <= 50:
+        return "copper"
+    elif value <= 100:
+        return "silver"
+    elif value <= 200:
+        return "gold"
+    else:
+        return "rainbow"
+    
+def get_event_badge_level(value: int) -> str:
+    if value <= 0:
+        return "iron"
+    elif value == 1:
+        return "copper"
+    elif value == 2:
+        return "silver"
+    elif value == 3:
+        return "gold"
+    else:
+        return "rainbow"
 
 def fetch_points(user_id: int) -> dict:
     doc_ref = db.collection("users").document(str(user_id))
