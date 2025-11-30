@@ -156,14 +156,8 @@ def create_voice_card(member: discord.Member) -> io.BytesIO:
     img_bytes.seek(0)
     return img_bytes
 
-IGNORED_BOT_IDS = [
-    1347190643113332766, #ノワール
-    1349672366082490378, #リリィ
-    1350062244725133374, #レオ　の入退出は無視する
-]
-
 async def handle_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-    if member.id in IGNORED_BOT_IDS:
+    if member.bot:
         return
 
     if before.channel and before.channel.id in CHANNEL_PAIRS and before.channel != after.channel:
