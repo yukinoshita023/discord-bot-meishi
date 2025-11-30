@@ -14,14 +14,8 @@ VOICE_CHANNEL_TO_ROLE = {
     905332899421769728: 1350763431363612693,  # ワイワイ3
 }
 
-IGNORED_USER_IDS = [
-    1347190643113332766, #ノワール
-    1349672366082490378, #リリィ
-    1350062244725133374, #レオ　の入退出は無視する
-]
-
 async def assign_role_to_member(member: discord.Member, channel_id: int):
-    if member.id in IGNORED_USER_IDS:
+    if member.bot:
         return
 
     role_id = VOICE_CHANNEL_TO_ROLE.get(channel_id)
@@ -36,7 +30,7 @@ async def assign_role_to_member(member: discord.Member, channel_id: int):
         print(f"チャンネルID {channel_id} に対応するロールが設定されていません")
 
 async def remove_role_from_member(member: discord.Member, channel_id: int):
-    if member.id in IGNORED_USER_IDS:
+    if member.bot:
         return
 
     role_id = VOICE_CHANNEL_TO_ROLE.get(channel_id)
