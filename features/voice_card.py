@@ -84,10 +84,11 @@ def create_voice_card(member: discord.Member) -> io.BytesIO:
 
     username = truncate_text(member.display_name, 28)
 
-    avatar_url = member.avatar.url
+    avatar_asset = member.guild_avatar or member.display_avatar
+    avatar_url = avatar_asset.url
     avatar = Image.open(io.BytesIO(requests.get(avatar_url).content))
     avatar_size = 100
-    avatar = avatar.resize((avatar_size, avatar_size))  
+    avatar = avatar.resize((avatar_size, avatar_size))
 
     avatar_x = 30
     avatar_y = 30
