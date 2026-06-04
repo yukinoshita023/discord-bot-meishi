@@ -1,3 +1,4 @@
+import random
 import discord
 from features.voice_card import create_voice_card, fetch_answers
 
@@ -11,6 +12,37 @@ STATIC_VOICE_CHANNELS = {
     847514073964740679,  # モクモク
     860122545381572608,  # ノンビリ
     847158182257754116,  # ワイワイ
+}
+
+LOCATIONS = [
+    ("🌾", "草原"),
+    ("🌲", "森"),
+    ("🌷", "花畑"),
+    ("🌴", "オアシス"),
+    ("🏜️", "砂漠"),
+    ("🏞️", "渓谷"),
+    ("🌋", "火山"),
+    ("🗻", "山"),
+    ("🏖️", "砂浜"),
+    ("🏔️", "氷河"),
+    ("🏝️", "孤島"),
+    ("🌊", "海"),
+    ("🏙️", "都市"),
+    ("⛲", "広場"),
+    ("🎪", "市場"),
+    ("⚓", "港町"),
+    ("🏮", "路地裏"),
+    ("📚", "図書館"),
+    ("☕", "喫茶店"),
+    ("🎡", "遊園地"),
+    ("🏕️", "集落"),
+    ("🌅", "浜辺"),
+]
+
+CATEGORY_HIRAGANA = {
+    "モクモク": "もくもく",
+    "ノンビリ": "のんびり",
+    "ワイワイ": "わいわい",
 }
 
 # {vc_id: {"creator_id": int, "messages": {member_id: message_id}}}
@@ -81,9 +113,12 @@ async def handle_auto_room(member: discord.Member, before: discord.VoiceState, a
     # 自由作成VCに入った場合
     if after.channel and after.channel.id in FREE_CREATION_CHANNELS:
         category = after.channel.category
+        category_name = FREE_CREATION_CHANNELS[after.channel.id]
+        emoji, location = random.choice(LOCATIONS)
+        room_name = f"{emoji}{CATEGORY_HIRAGANA[category_name]}の{location}"
 
         new_vc = await member.guild.create_voice_channel(
-            name=f"{member.display_name}の部屋",
+            name=room_name,
             category=category,
         )
 
@@ -94,6 +129,7 @@ async def handle_auto_room(member: discord.Member, before: discord.VoiceState, a
 
         await member.move_to(new_vc)
 
+        await new_vc.send(f"**{member.display_name}** さんが {room_name} を作成しました！")
         msg_id = await _post_meishi(member, new_vc)
         if msg_id:
             auto_rooms[new_vc.id]["messages"][member.id] = msg_id
