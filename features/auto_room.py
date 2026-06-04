@@ -7,8 +7,17 @@ FREE_CREATION_CHANNELS = {
     1512052850925109339: "ワイワイ",
 }
 
+STATIC_VOICE_CHANNELS = {
+    847514073964740679,  # モクモク
+    860122545381572608,  # ノンビリ
+    847158182257754116,  # ワイワイ
+}
+
 # {vc_id: {"creator_id": int, "messages": {member_id: message_id}}}
 auto_rooms: dict = {}
+
+# {(channel_id, member_id): message_id}
+static_messages: dict = {}
 
 
 async def _post_meishi(member: discord.Member, vc: discord.VoiceChannel):
@@ -32,6 +41,22 @@ async def _post_meishi(member: discord.Member, vc: discord.VoiceChannel):
 async def handle_auto_room(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
     if member.bot:
         return
+
+    # 定常VCから退出した場合
+    if before.channel and before.channel.id in STATIC_VOICE_CHANNELS:
+        key = (before.channel.id, member.id)
+        if key in static_messages:
+            try:
+                msg = await before.channel.fetch_message(static_messages.pop(key))
+                await msg.delete()
+            except discord.NotFound:
+                pass
+
+    # 定常VCに入った場合
+    if after.channel and after.channel.id in STATIC_VOICE_CHANNELS:
+        msg_id = await _post_meishi(member, after.channel)
+        if msg_id:
+            static_messages[(after.channel.id, member.id)] = msg_id
 
     # 自動作成部屋から退出した場合
     if before.channel and before.channel.id in auto_rooms:
