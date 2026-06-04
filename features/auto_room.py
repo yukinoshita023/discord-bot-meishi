@@ -56,9 +56,10 @@ async def handle_auto_room(member: discord.Member, before: discord.VoiceState, a
     # 自由作成VCに入った場合
     if after.channel and after.channel.id in FREE_CREATION_CHANNELS:
         category = after.channel.category
+        category_name = FREE_CREATION_CHANNELS[after.channel.id]
 
         new_vc = await member.guild.create_voice_channel(
-            name=f"{member.display_name}の部屋",
+            name=f"{member.display_name}/{category_name}/部屋",
             category=category,
         )
 
