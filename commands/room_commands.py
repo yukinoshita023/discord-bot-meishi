@@ -20,10 +20,6 @@ async def setup(bot: discord.Client):
             return
 
         await vc.edit(name=name)
-        text_channel = interaction.guild.get_channel(room["text_channel_id"])
-        if text_channel:
-            await text_channel.edit(name=name)
-
         await interaction.response.send_message(f"部屋名を「{name}」に変更しました。", ephemeral=True)
 
     @bot.tree.command(name="room_limit", description="自動作成した部屋の人数制限を設定します（部屋の作成者のみ）")
