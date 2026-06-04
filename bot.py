@@ -1,8 +1,7 @@
 import discord
 from config import TOKEN
 from commands import setup_commands
-from features.voice_card import handle_voice_state_update
-from features.role_manager import assign_role_to_member, remove_role_from_member
+from features.auto_room import handle_auto_room
 
 from firebase_config import db
 
@@ -27,15 +26,16 @@ bot = MyBot()
 @bot.event
 async def on_ready():
     print(f"ログインしました: {bot.user}")
+    for guild in bot.guilds:
+        p = guild.me.guild_permissions
+        print(f"[権限チェック] {guild.name}")
+        print(f"  manage_channels : {p.manage_channels}")
+        print(f"  manage_roles    : {p.manage_roles}")
+        print(f"  move_members    : {p.move_members}")
 
 @bot.event
 async def on_voice_state_update(member, before, after):
-    await handle_voice_state_update(member, before, after)
+    await handle_auto_room(member, before, after)
 
-    if before.channel != after.channel:
-        if before.channel:
-            await remove_role_from_member(member, before.channel.id)
-        if after.channel:
-            await assign_role_to_member(member, after.channel.id)
 
 bot.run(TOKEN)
