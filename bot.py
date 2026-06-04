@@ -26,12 +26,6 @@ bot = MyBot()
 @bot.event
 async def on_ready():
     print(f"ログインしました: {bot.user}")
-    for guild in bot.guilds:
-        p = guild.me.guild_permissions
-        print(f"[権限チェック] {guild.name}")
-        print(f"  manage_channels : {p.manage_channels}")
-        print(f"  manage_roles    : {p.manage_roles}")
-        print(f"  move_members    : {p.move_members}")
 
 @bot.event
 async def on_voice_state_update(member, before, after):
