@@ -85,7 +85,9 @@ async def handle_auto_room(member: discord.Member, before: discord.VoiceState, a
     if member.bot:
         return
 
-    if before.channel == after.channel:
+    before_id = before.channel.id if before.channel else None
+    after_id = after.channel.id if after.channel else None
+    if before_id == after_id:
         return
 
     # 定常VCから退出した場合
