@@ -85,6 +85,9 @@ async def handle_auto_room(member: discord.Member, before: discord.VoiceState, a
     if member.bot:
         return
 
+    if before.channel == after.channel:
+        return
+
     # 定常VCから退出した場合
     if before.channel and before.channel.id in STATIC_VOICE_CHANNELS:
         key = (before.channel.id, member.id)
