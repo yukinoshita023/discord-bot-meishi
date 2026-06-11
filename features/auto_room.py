@@ -8,6 +8,8 @@ FREE_CREATION_CHANNELS = {
     1512052850925109339: "ワイワイ",
 }
 
+SHIZUKA_CREATION_CHANNEL = 1514638364249292911
+
 STATIC_VOICE_CHANNELS = {
     847514073964740679,  # モクモク
     860122545381572608,  # ノンビリ
@@ -111,9 +113,10 @@ async def handle_auto_room(member: discord.Member, before: discord.VoiceState, a
     if before.channel and before.channel.id in auto_rooms:
         room = auto_rooms[before.channel.id]
 
-        if member.id in room["messages"]:
+        msg_id = room["messages"].pop(member.id, None)
+        if msg_id:
             try:
-                msg = await before.channel.fetch_message(room["messages"].pop(member.id))
+                msg = await before.channel.fetch_message(msg_id)
                 await msg.delete()
             except discord.NotFound:
                 pass
@@ -126,6 +129,31 @@ async def handle_auto_room(member: discord.Member, before: discord.VoiceState, a
             except discord.NotFound:
                 pass
             del auto_rooms[before.channel.id]
+
+    # 会話非推奨VC作成チャンネルに入った場合
+    if after.channel and after.channel.id == SHIZUKA_CREATION_CHANNEL:
+        category = after.channel.category
+        emoji, location = random.choice(LOCATIONS)
+        room_name = f"{emoji}ちんもくの{location}"
+
+        new_vc = await member.guild.create_voice_channel(
+            name=room_name,
+            category=category,
+        )
+
+        auto_rooms[new_vc.id] = {
+            "creator_id": member.id,
+            "messages": {member.id: None},
+        }
+
+        await member.move_to(new_vc)
+        await new_vc.edit(status="会話非推奨")
+
+        await new_vc.send(f"**{member.display_name}** さんが {room_name} を作成しました！")
+        msg_id = await _post_meishi(member, new_vc)
+        if msg_id:
+            auto_rooms[new_vc.id]["messages"][member.id] = msg_id
+        return
 
     # 自由作成VCに入った場合
     if after.channel and after.channel.id in FREE_CREATION_CHANNELS:
