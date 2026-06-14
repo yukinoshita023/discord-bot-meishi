@@ -61,13 +61,17 @@ def create_voice_card(member: discord.Member) -> io.BytesIO:
     card_width = 907
     card_height = 150 + len(answers) * 45 + 20 + 120 + 30 + 30 + 25
 
+    GOLD_ROLE_ID = 1513536556323963110
+    has_gold_role = any(r.id == GOLD_ROLE_ID for r in member.roles)
+    bg_path = "card-images/card-space-gold.png" if has_gold_role else "card-images/card-space.png"
+
     try:
-        bg = Image.open("card-images/card-space.png").convert("RGB")
+        bg = Image.open(bg_path).convert("RGB")
         bg = bg.resize((card_width, card_height), Image.LANCZOS)
         enhancer = ImageEnhance.Brightness(bg)
-        image = enhancer.enhance(0.1)
+        image = enhancer.enhance(0.2 if has_gold_role else 0.1)
     except IOError:
-        raise FileNotFoundError("card-images/card-space.png が見つかりません！")
+        raise FileNotFoundError(f"{bg_path} が見つかりません！")
 
     draw = ImageDraw.Draw(image)
 
