@@ -128,7 +128,7 @@ async def handle_auto_room(member: discord.Member, before: discord.VoiceState, a
                 await before.channel.delete()
             except discord.NotFound:
                 pass
-            del auto_rooms[before.channel.id]
+            auto_rooms.pop(before.channel.id, None)
 
     # 会話非推奨VC作成チャンネルに入った場合
     if after.channel and after.channel.id == SHIZUKA_CREATION_CHANNEL:
@@ -151,7 +151,7 @@ async def handle_auto_room(member: discord.Member, before: discord.VoiceState, a
 
         await new_vc.send(f"**{member.display_name}** さんが {room_name} を作成しました！")
         msg_id = await _post_meishi(member, new_vc)
-        if msg_id:
+        if msg_id and new_vc.id in auto_rooms:
             auto_rooms[new_vc.id]["messages"][member.id] = msg_id
         return
 
@@ -176,7 +176,7 @@ async def handle_auto_room(member: discord.Member, before: discord.VoiceState, a
 
         await new_vc.send(f"**{member.display_name}** さんが {room_name} を作成しました！")
         msg_id = await _post_meishi(member, new_vc)
-        if msg_id:
+        if msg_id and new_vc.id in auto_rooms:
             auto_rooms[new_vc.id]["messages"][member.id] = msg_id
         return
 
