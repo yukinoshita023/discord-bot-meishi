@@ -70,7 +70,7 @@ async def _post_meishi(member: discord.Member, vc: discord.VoiceChannel):
     try:
         answers = fetch_answers(member.id)
         if not answers:
-            howto_channel_id = 1387334572613697587
+            howto_channel_id = 1523997754295062648
             howto_url = f"https://discord.com/channels/{member.guild.id}/{howto_channel_id}"
             msg = await vc.send(
                 content=f"{member.mention} さん、まだ自己紹介が未設定です！ `/add_card` で登録してみてね！登録方法はこちら 👉 {howto_url}"
