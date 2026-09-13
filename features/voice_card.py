@@ -62,14 +62,22 @@ def create_voice_card(member: discord.Member) -> io.BytesIO:
     card_height = 150 + len(answers) * 45 + 20 + 120 + 30 + 30 + 25
 
     GOLD_ROLE_ID = 1513536556323963110
+    RED_PLANET_ROLE_ID = 1543216546086785135
     has_gold_role = any(r.id == GOLD_ROLE_ID for r in member.roles)
-    bg_path = "card-images/card-space-gold.png" if has_gold_role else "card-images/card-space.png"
+    has_red_planet_role = any(r.id == RED_PLANET_ROLE_ID for r in member.roles)
+
+    if has_red_planet_role:
+        bg_path = "card-images/card-space-red.png"
+    elif has_gold_role:
+        bg_path = "card-images/card-space-gold.png"
+    else:
+        bg_path = "card-images/card-space.png"
 
     try:
         bg = Image.open(bg_path).convert("RGB")
         bg = bg.resize((card_width, card_height), Image.LANCZOS)
         enhancer = ImageEnhance.Brightness(bg)
-        image = enhancer.enhance(0.2 if has_gold_role else 0.1)
+        image = enhancer.enhance(0.2 if (has_gold_role or has_red_planet_role) else 0.1)
     except IOError:
         raise FileNotFoundError(f"{bg_path} が見つかりません！")
 
