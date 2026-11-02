@@ -57,6 +57,7 @@ def points_to_time_str(pt: int) -> str:
 def create_voice_card(member: discord.Member) -> io.BytesIO:
     answers = fetch_answers(member.id)
     points = fetch_points(member.id)
+    has_debt = fetch_debt_amount(member.id) > 0
 
     card_width = 907
     card_height = 150 + len(answers) * 45 + 20 + 120 + 30 + 30 + 25
@@ -66,7 +67,9 @@ def create_voice_card(member: discord.Member) -> io.BytesIO:
     has_gold_role = any(r.id == GOLD_ROLE_ID for r in member.roles)
     has_red_planet_role = any(r.id == RED_PLANET_ROLE_ID for r in member.roles)
 
-    if has_red_planet_role:
+    if has_debt:
+        bg_path = "card-images/card-space-ruined.png"
+    elif has_red_planet_role:
         bg_path = "card-images/card-space-red.png"
     elif has_gold_role:
         bg_path = "card-images/card-space-gold.png"
@@ -77,7 +80,8 @@ def create_voice_card(member: discord.Member) -> io.BytesIO:
         bg = Image.open(bg_path).convert("RGB")
         bg = bg.resize((card_width, card_height), Image.LANCZOS)
         enhancer = ImageEnhance.Brightness(bg)
-        image = enhancer.enhance(0.2 if (has_gold_role or has_red_planet_role) else 0.1)
+        brightness = 0.2 if (has_debt or has_gold_role or has_red_planet_role) else 0.1
+        image = enhancer.enhance(brightness)
     except IOError:
         raise FileNotFoundError(f"{bg_path} が見つかりません！")
 
@@ -215,3 +219,12 @@ def fetch_points(user_id: int) -> dict:
 
     data = doc.to_dict()
     return data.get("points", {})
+
+def fetch_debt_amount(user_id: int) -> int:
+    doc_ref = db.collection("users").document(str(user_id))
+    doc = doc_ref.get()
+    if not doc.exists:
+        return 0
+
+    data = doc.to_dict()
+    return int(data.get("debt", {}).get("amount", 0))
