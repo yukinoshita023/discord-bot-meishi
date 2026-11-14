@@ -57,7 +57,8 @@ def points_to_time_str(pt: int) -> str:
 def create_voice_card(member: discord.Member) -> io.BytesIO:
     answers = fetch_answers(member.id)
     points = fetch_points(member.id)
-    has_debt = fetch_debt_amount(member.id) > 0
+    debt_amount = fetch_debt_amount(member.id)
+    has_debt = debt_amount > 0
 
     card_width = 907
     card_height = 150 + len(answers) * 45 + 20 + 120 + 30 + 30 + 25
@@ -112,7 +113,14 @@ def create_voice_card(member: discord.Member) -> io.BytesIO:
     wakusei_pt = int(points.get("わくせい", 0))
     username_bbox = draw.textbbox((0, 0), username, font=font_large)
     username_width = username_bbox[2] - username_bbox[0]
-    draw.text((username_x + username_width + 20, username_y), f"{wakusei_pt}WP", fill=(255, 220, 80), font=font_large)
+    wp_text = f"{wakusei_pt}WP"
+    wp_x = username_x + username_width + 20
+    draw.text((wp_x, username_y), wp_text, fill=(255, 220, 80), font=font_large)
+
+    if has_debt:
+        debt_text = f"現在の借金：{debt_amount}WP"
+        debt_y = username_y + 60
+        draw.text((username_x, debt_y), debt_text, fill=(255, 105, 180), font=font_normal)
 
     # --- Q&A ---
     y_offset = 150
